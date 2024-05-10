@@ -1,0 +1,15 @@
+{
+  "name": "langs-detector",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Greensky-gs <72513011+Greensky-gs@users.noreply.github.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@types/axios": "^0.14.0",
+    "axios": "^1.6.8",
+    "dotenv": "^16.4.5",
+    "mysql2": "^3.9.7",
+    "node-html-parser": "^6.1.13",
+    "sequelize": "^6.37.3"
+  }
+}

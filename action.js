@@ -1,0 +1,1 @@
+module.exports.action = process.argv.includes('--chat') ? 'chat' : process.argv.includes('--scrap') ? 'scrapper' : process.argv.includes('--test') ? 'test' : process.argv.includes('--recalc') ? 'recalc' : process.argv.includes('--train') ? 'train' : 'none'
