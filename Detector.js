@@ -60,7 +60,8 @@ class Data {
     }
 
     get randomImportance() {
-        return Object.fromEntries(Object.keys(this.importance).map(x => [x, Math.floor(Math.random() * 100)]))
+        const keys = [...new Set(Object.keys(this.importance).concat(this.allowed.split('')))]
+        return Object.fromEntries(keys.map(x => [x, Math.floor(Math.random() * 100)]))
     }
     mutate(template) {
         const newImportance = {};
