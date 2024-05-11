@@ -60,7 +60,7 @@ class Data {
     }
 
     get randomImportance() {
-        return Object.fromEntries(Object.keys(this.importance).map(x => [x, Math.floor(Math.random() * 100) / 10]))
+        return Object.fromEntries(Object.keys(this.importance).map(x => [x, Math.floor(Math.random() * 100)]))
     }
     mutate(template) {
         const newImportance = {};
@@ -174,12 +174,11 @@ class Detector extends EventEmitter {
             const ratios = this.calculateRatio(input)
 
             const mapped = this.vectors.map(lang => {
-                const distance = Math.sqrt(Object.entries(ratios).map(([k, v]) => (lang.ratios[k] * importance[k] - v * importance[k]) ** 2).reduce((a, b) => a + b, 0))
+                const distance = Math.sqrt(Object.entries(ratios).map(([k, v]) => (lang.ratios[k] * (importance[k] ?? 1) - v * (importance[k] ?? 1)) ** 2).reduce((a, b) => a + b, 0))
                 return { distance, lang }
             })
 
             const sorted = mapped.sort((a, b) => a.distance - b.distance);
-            const ref = sorted[0].distance
 
             const best = sorted.slice(0, k)
         
@@ -294,7 +293,7 @@ class Detector extends EventEmitter {
                     const result = await this.detect(test.input, k, {
                         importance: imp
                     });
-        
+
                     if (result === test.expected) success++
                     resolve()
                 }))
