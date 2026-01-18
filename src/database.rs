@@ -14,6 +14,7 @@ pub struct Lang {
 pub struct Database {
     connection: Option<PooledConn>,
     pub vectors: Vec<Lang>,
+    pub count: HashMap<String, usize>,
     connected: bool,
 }
 
@@ -32,11 +33,16 @@ impl Lang {
 
 impl Database {
     pub fn new() -> Database {
-        return Database {
+        let mut db = Database {
             connection: None,
             vectors: vec![],
-            connected: false
-        }
+            connected: false,
+            count: HashMap::new()
+        };
+        db.count.insert("fr".to_string(), 0);
+        db.count.insert("en".to_string(), 0);
+
+        return db;
     }
     pub fn connect(&mut self) -> Option<bool> {
         if self.connected {
@@ -69,7 +75,7 @@ impl Database {
             }
         }
 
-        let _ = conn.query_drop("CREATE TABLE IF NOT EXISTS langs ( name VARCHAR(255), ratios LONGTEXT, content VARCHAR(255)");
+        let _ = conn.query_drop("CREATE TABLE IF NOT EXISTS langs ( name VARCHAR(255), ratios LONGTEXT, content VARCHAR(1023)");
 
         self.connection = Some(conn);
         self.connected = true;
@@ -100,8 +106,8 @@ impl Database {
                 return;
             }
 
-            let lang = Lang::from(name, copy, content);
-            lang.print();
+            let lang = Lang::from(name.clone(), copy, content);
+            self.count.entry(name.clone()).and_modify(|e| *e += 1).or_insert(1);
             self.vectors.push(lang);
         }) {
             Ok(_) => {},
@@ -126,8 +132,14 @@ impl Database {
             "content" => entry.content.clone(),
             "ratios" => json
         }]) {
-            Ok(_) => {},
+            Ok(_) => {
+                self.add_count(&entry.name.clone());
+            },
             Err(e) => println!("{:?}", e)
         };
+    }
+
+    fn add_count(&mut self, entry: &String) {
+        self.count.entry(entry.to_string()).and_modify(|e| *e += 1).or_insert(1);
     }
 }

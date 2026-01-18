@@ -21,6 +21,19 @@ impl Detector {
         return detector;
     }
 
+    pub fn get_least_registered_lang(&self) -> Option<String> {
+        if self.database.count.len() == 0 {
+            return None;
+        }
+        let mut min: String = self.database.count.keys().nth(0).unwrap().to_string();
+        for (k, v) in &self.database.count {
+            if self.database.count.get(&min).unwrap() > v {
+                min = k.clone();
+            }
+        }
+
+        return Some(min);
+    }
     pub fn detect(&mut self, input: String) -> String {
         let ratio: Ratios = self.brain.calculate_ratios(&input); 
 

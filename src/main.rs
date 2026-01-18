@@ -1,21 +1,19 @@
-mod database;
 mod brain;
+mod database;
 mod detector;
+mod scrap;
 
 use dotenv::dotenv;
 
 use crate::database::Database;
 use crate::brain::Brain;
 use crate::detector::Detector;
+use crate::scrap::start_scrapping;
 
 fn main() {
     dotenv().ok();
-    println!("Hello world!");
 
     let mut detector = Detector::new();
 
-
-    let input = String::from("Je suis un texte en français");
-
-    detector.detect(input);
+    start_scrapping(&mut detector, &100);
 }
