@@ -1,6 +1,8 @@
 use crate::brain::Brain;
 use crate::database::{Database,Lang,Ratios};
+use crate::scrap::get_text_vectors;
 use std::collections::HashMap;
+use std::fs;
 
 pub const K: u32 = 39;
 
@@ -71,5 +73,44 @@ impl Detector {
         let lang = Lang::from(name.to_string(), ratio, content.to_string());
 
         self.database.add_entry(&lang);
+    }
+
+    pub fn save_brain(&self, output: &String) {
+        self.brain.write(output);
+    }
+    pub fn load_brain(&mut self, input: &String) -> bool {
+        if !fs::metadata(input).is_ok() {
+            println!("Trying to load from \x1b[90m{}\x1b[0m, but it doesn't exist", input);
+            return false;
+        }
+        self.brain.load(input);
+        return true;
+    }
+
+    pub fn switch_brain(&mut self, brain: &Brain) {
+        self.brain.transform(brain);
+    }
+
+    pub fn test(&mut self, repeats: &u64) -> Option<HashMap<String, f64>> {
+        let vectors = get_text_vectors(repeats);
+        if let None = vectors {
+            println!("Cannot test because None was received");
+            return None;
+        }
+        let vectors = vectors.unwrap();
+
+        let mut map: HashMap<String, u64> = HashMap::new();
+        for vector in vectors {
+            let result = self.detect(vector.1).unwrap();
+            let modif = if result == vector.0 {1} else {0};
+
+            map.entry(vector.0).and_modify(|v| *v += modif).or_insert(modif);
+        }
+
+        let mut result: HashMap<String, f64> = HashMap::new();
+        for (k, v) in &map {
+            result.insert(k.to_string(), (*v) as f64 / (*repeats) as f64);
+        }
+        return Some(result);
     }
 }

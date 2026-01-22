@@ -1,13 +1,32 @@
 use crate::database::Ratios;
 use rand::{Rng,rng};
 use regex::Regex;
+use serde_json::from_str;
 use std::collections::HashMap;
+use std::fs;
 
 pub struct Brain {
-    ratios: Ratios,
+    pub ratios: Ratios,
 }
 
 impl Brain {
+    pub fn random(min: f64, max: f64) -> Brain {
+        let mut rng_thread = rng();
+        if max <= min {
+            panic!("Invalid range");
+        }
+        let mut brain = Brain::new();
+        let mut copy: HashMap<String, f32>  = HashMap::new();
+
+        for (k, _v) in &brain.ratios {
+            copy.insert(k.to_string(), rng_thread.random_range(min..max) as f32);
+        }
+        for (k, v) in &copy {
+            brain.ratios.entry(k.to_string()).and_modify(|val| *val = *v);
+        }
+
+        return brain;
+    }
     pub fn new() -> Brain {
         return Brain {
             ratios: vec![
@@ -44,6 +63,26 @@ impl Brain {
         }
     }
 
+    pub fn transform(&mut self, into: &Brain) {
+        for (k, v) in &(*into).ratios {
+            self.ratios.entry(k.to_string()).and_modify(|val| *val = *v).or_insert(*v);
+        }
+    }
+    pub fn write(&self, output: &String) {
+        let json = serde_json::to_string(&self.ratios).unwrap();
+        fs::write(output, json).expect(&format!("Cannot write at {}", output));
+    }
+    pub fn load(&mut self, input: &String) {
+        let data = fs::read_to_string(input).expect(&format!("Cannot read at {}", input));
+        let map: HashMap<String, serde_json::Value> = from_str(&data).unwrap();
+
+        for (k, v) in &map {
+            if let serde_json::Value::Number(num) = v {
+                let ratio = num.as_f64().unwrap() as f32;
+                self.ratios.entry(k.to_string()).and_modify(|val| *val = ratio) .or_insert(ratio);
+            }
+        }
+    } 
     pub fn distance(&self, a: &Ratios, b: &Ratios) -> f64 {
         self.ratios.iter().map(|(k, v)| {
             let val: f64 = (a[k] * v - b[k] * v) as f64;
@@ -60,6 +99,20 @@ impl Brain {
         }
 
         return ratios;
+    }
+
+    pub fn clone(&self) -> Brain {
+        return Brain::from(&self.ratios);
+    }
+    pub fn mutate(&self) -> Brain {
+        let mutation = mutate_ratio(&self.ratios);
+
+        return Brain::from(&mutation);
+    }
+    pub fn from(ratio: &Ratios) -> Brain {
+        return Brain {
+            ratios: ratio.clone()
+        }
     }
 }
 
